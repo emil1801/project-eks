@@ -21,7 +21,7 @@ variable "cluster_name" {
   description = "Cluster name used"
 }
 variable "cluster_version" {
-  default     = "1.21"
+  default     = "1.20"
   description = "Cluster name used"
 }
 variable "instance_type" {
@@ -60,17 +60,24 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.cluster.token
 }
 
+# module "worker_groups" {
+#   source = "./worker_groups.tf"
+#   count = module.my-cluster.worker_node_group_count
+#   image = module.my-cluster.worker_node_ami
+# }
+
 module "my-cluster" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "12.0.0"
-  cluster_name    = "my-cluster"
-  cluster_version = "1.16"
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
   subnets = [
     data.terraform_remote_state.main.outputs.private_subnets[0],
     data.terraform_remote_state.main.outputs.private_subnets[1],
     data.terraform_remote_state.main.outputs.private_subnets[2]
   ]
   vpc_id = data.terraform_remote_state.main.outputs.vpc_id
+  cluster_create_security_group = true
   worker_groups = [{
     instance_type = var.instance_type
     asg_max_size  = var.asg_max_size
